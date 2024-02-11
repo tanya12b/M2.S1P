@@ -1,0 +1,51 @@
+
+const byte LED_PIN = 13; // Set the pin for the LED
+const byte METER_PIN = A4; // Set the pin for the potentiometer
+const byte POTENTIOMETER_PIN = A4;  // Set the pin for the meter (not used)
+
+void setup() {
+  // Set the LED pin as an output
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(METER_PIN, INPUT);// Assign the meter pin to an input (not in use
+  Serial.begin(9600 ;    // Initiate serial communication
+}
+
+void loop() {
+// Read the potentiometer value and map it to the timer frequency range
+  double frequency = map(analogRead(POTENTIOMETER_PIN), 0, 1023, 0.1, 10.0);
+  
+  // Start the timer with the calculated frequency
+  startTimer(frequency);
+ // Set a time limit for the delay and modify it according to your needs.
+  delay(1000);
+}
+
+// Function to start the timer with the specified frequency
+void startTimer(double frequency) {
+  // Disable interrupts
+  noInterrupts();
+  // Define the prescaler value 
+  int prescaler = 1024;
+  // Determine the timer value by utilizing the prescaler, CPU frequency, and desired frequency.
+  long timerValue = F_CPU / prescaler / frequency - 1;
+  // Reset timer registers
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
+  // Assign the given timer value to the output compare register.
+  OCR1A = timerValue;
+  // Configure timer mode (CTC mode)
+  TCCR1B |= (1 << WGM12);
+  // Set prescaler bits for timer
+  TCCR1B |= (1 << CS12) | (1 << CS10);
+  // Enable the output compare interrupt
+  TIMSK1 |= (1 << OCIE1A);
+  // Enable interrupts
+  interrupts();
+}
+
+// The timer compare match Interrupt Service Routine (ISR) 
+ISR(TIMER1_COMPA_vect) {
+ // Change the LED pin digital state
+  digitalWrite(LED_PIN, digitalRead(LED_PIN) ^ 1);
+}
